@@ -11,18 +11,22 @@ A comprehensive full-stack web application designed to help students track their
 
 ## 🛠️ Tech Stack
 * **Backend:** Java, Spring Boot (Web, Data JPA)
-* **Database:** MS SQL Server
+* **Database:** MS SQL Server (Relational Schema)
 * **Frontend:** HTML5, CSS3, JavaScript
-* **Tools:** Maven, IntelliJ IDEA, Git
+* **Tools:** Maven, IntelliJ IDEA, SSMS (SQL Server Management Studio)
 
 ## ⚙️ How to Run
 1.  **Clone the repository**
     ```bash
     git clone [https://github.com/adipetre17/Student-Budget-App.git](https://github.com/adipetre17/Student-Budget-App.git)
     ```
+
 2.  **Configure Database**
-    * Create a local database (e.g., `student_budget_db`).
-    * Update `src/main/resources/application.properties` with your database username and password.
+    * Create a local database (e.g., `student_budget_db`) using SSMS.
+    * Update `src/main/resources/application.properties` with your credentials.
+    * *Note:* For SQL Server, your URL should look like this:
+      `spring.datasource.url=jdbc:sqlserver://localhost;databaseName=student_budget_db;encrypt=true;trustServerCertificate=true;`
+
 3.  **Run the Application**
     * Open the project in **IntelliJ IDEA**.
     * Run the main application class.
