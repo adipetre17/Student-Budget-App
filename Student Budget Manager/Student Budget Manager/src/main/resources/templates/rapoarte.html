@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Rapoarte SQL - StudentBudget</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0; min-height: 100vh; color: #333; }
+
+        .nav { background-color: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); overflow: hidden; padding: 0; margin-bottom: 20px;}
+        .nav a { float: left; color: white; padding: 15px 20px; text-decoration: none; font-weight: 600; }
+        .nav a:hover { background-color: rgba(255,255,255,0.2); }
+        .active { background-color: rgba(255,255,255,0.25); }
+        .logout { float: right !important; background-color: #ff6b6b; }
+
+        .container { max-width: 1100px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 50px;}
+
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
+        h2 { color: #34495e; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 40px; }
+        p.subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
+
+        .card-stat { background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card-stat h3 { margin-top: 0; color: #667eea; font-size: 18px; }
+
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; font-size: 14px;}
+        li:last-child { border-bottom: none; }
+
+        .val { font-weight: bold; }
+        .neg { color: #e74c3c; }
+        .pos { color: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a th:href="@{/home}">Acasă</a>
+    <a th:href="@{/tranzactii}">Tranzacții</a>
+    <a th:href="@{/conturi}">Conturi</a>
+    <a th:href="@{/rapoarte}" class="active">Rapoarte</a>
+    <a th:href="@{/logout}" class="logout">Delogare</a>
+</div>
+
+<div class="container">
+    <h1>Rapoarte Avansate</h1>
+
+    <h2>A. Statistici Generale</h2>
+    <div class="grid">
+        <div class="card-stat">
+            <h3>1. Cheltuieli Totale pe Categorii</h3>
+            <div th:if="${sumaCategorii.empty}">Nu există date.</div>
+            <ul>
+                <li th:each="row : ${sumaCategorii}">
+                    <span th:text="${row[0]}">Nume</span>
+                    <span class="val neg" th:text="${row[1]} + ' RON'">Suma</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>2. Balanța Generală</h3>
+            <div th:each="row : ${balantaGen}">
+                <ul>
+                    <li><span>Total Venituri:</span> <span class="val pos" th:text="${row[0]}">0</span></li>
+                    <li><span>Total Cheltuieli:</span> <span class="val neg" th:text="${row[1]}">0</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card-stat">
+            <h3>3. Top 3 Cele mai mari cheltuieli</h3>
+            <ul>
+                <li th:each="row : ${topCheltuieli}">
+                    <span th:text="${row[0]}">Descriere</span>
+                    <span class="val neg" th:text="${row[1]}">Suma</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>4. Activitate pe Conturi</h3>
+            <ul>
+                <li th:each="row : ${nrTranz}">
+                    <span th:text="${row[0]}">Cont</span>
+                    <span><b th:text="${row[1]}">0</b> tranzacții</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>5. Tranzacții Luna Aceasta</h3>
+            <div th:if="${tranzLuna.empty}">Nicio tranzacție luna asta.</div>
+            <ul>
+                <li th:each="row : ${tranzLuna}">
+                    <span th:text="${row[0]}">Desc</span>
+                    <span class="val" th:text="${row[1]}">Suma</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>6. Media Cheltuielilor</h3>
+            <div style="text-align: center; font-size: 24px; color: #e67e22; font-weight: bold; margin-top: 15px;">
+                <span th:text="${mediaCheltuieli} != null ? ${#numbers.formatDecimal(mediaCheltuieli, 1, 2)} : '0.00'">0.00</span> RON
+            </div>
+        </div>
+    </div>
+
+    <h2>B. Analiză Aprofundată</h2>
+    <div class="grid">
+        <div class="card-stat">
+            <h3>7. Cheltuieli Peste Medie</h3>
+            <ul>
+                <li th:each="t : ${pesteMedie}">
+                    <span th:text="${t.descriere}">Desc</span>
+                    <span class="val neg" th:text="${t.suma}">Suma</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>8. Conturi Inactive</h3>
+            <p style="font-size:12px; color:#888;">(Conturi care nu au nicio tranzacție asociată.)</p>
+            <ul>
+                <li th:each="c : ${conturiInactive}" th:text="${c[1]}">Nume Cont</li>
+            </ul>
+            <div th:if="${conturiInactive.empty}" style="color:green; font-size:13px;">Toate conturile sunt active!</div>
+        </div>
+
+        <div class="card-stat">
+            <h3>9. Categorii cu Buget</h3>
+            <p style="font-size:12px; color:#888;">(Categorii care au fost incluse în planificarea bugetară.)</p>
+            <ul>
+                <li th:each="c : ${categoriiBuget}" th:text="${c[1]}">Categorie</li>
+            </ul>
+        </div>
+
+        <div class="card-stat">
+            <h3>10. Record Financiar</h3>
+            <p style="font-size:12px; color:#888;">(Cea mai mare tranzacție din contul cu cei mai mulți bani.)</p>
+            <ul th:if="${!maxTranz.empty}">
+                <li th:each="t : ${maxTranz}">
+                    <span th:text="${t.descriere}">Desc</span>
+                    <span class="val" th:text="${t.suma}">Suma</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Tranzacții - StudentBudget</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* NAVIGATIE */
+        .nav {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .nav a { float: left; color: white; padding: 15px 20px; text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .nav a:hover, .active { background-color: rgba(255,255,255,0.25); }
+        .logout { float: right !important; background-color: #ff6b6b; }
+
+        /* CONTAINER PRINCIPAL */
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 50px;
+        }
+
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        h3 { color: #34495e; }
+
+        /* TABEL MODERN */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; overflow: hidden; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        thead { background: linear-gradient(to right, #4b6cb7, #182848); color: white; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f5f5f5; }
+
+        /* FORMULARE & BUTOANE */
+        .form-box { background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; }
+        .form-group { margin-bottom: 15px; }
+        input, select { padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;}
+        input:focus { outline: none; border-color: #667eea; }
+
+        .btn { padding: 8px 15px; text-decoration: none; color: white; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-danger { background-color: #ff6b6b; }
+        .btn-success { background: linear-gradient(to right, #11998e, #38ef7d); width: 100%; padding: 12px; margin-top: 10px;}
+        .btn-update { background-color: #f39c12; font-size: 12px; }
+        .btn-filter { background: #3498db; }
+
+        .error-msg { color: #e74c3c; font-size: 13px; display: none; margin-top: 5px; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a th:href="@{/home}">Acasă</a>
+    <a th:href="@{/tranzactii}" class="active">Tranzacții</a>
+    <a th:href="@{/conturi}">Conturi</a>
+    <a th:href="@{/rapoarte}">Rapoarte</a>
+    <a th:href="@{/logout}" class="logout">Delogare</a>
+</div>
+
+<div class="container">
+    <h1>Gestionare Tranzacții</h1>
+
+    <div class="form-box">
+        <h3>Adaugă o tranzacție nouă</h3>
+        <form th:action="@{/tranzactii}" method="post" id="addForm" onsubmit="return validateAddForm()">
+            <input type="hidden" name="action" value="add">
+
+            <div style="display: flex; gap: 15px;">
+                <div style="flex: 2;">
+                    <label>Descriere:</label>
+                    <input type="text" id="descriere" name="descriere" required placeholder="Ex: Pizza cu colegii">
+                    <span id="err-descriere" class="error-msg">Trebuie să folosești o descriere validă!</span>
+                </div>
+                <div style="flex: 1;">
+                    <label>Suma (RON):</label>
+                    <input type="text" id="suma" name="suma" required placeholder="Ex: -50">
+                    <span id="err-suma" class="error-msg">Număr real necesar!</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 15px;">
+                <div style="flex: 1;">
+                    <label>Cont:</label>
+                    <select name="id_cont">
+                        <option th:each="c : ${conturiList}" th:value="${c.id}" th:text="${c.nume}">Cont</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label>Categorie:</label>
+                    <select name="id_categorie">
+                        <option th:each="cat : ${categoriiList}" th:value="${cat.id}" th:text="${cat.nume}">Categorie</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">Adaugă Tranzacție</button>
+        </form>
+    </div>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
+
+    <form th:action="@{/tranzactii}" method="get" onsubmit="return validateFilter()" style="background: #eef2f7; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+        <label style="font-weight: bold; color: #555;">Filtrare:</label>
+        <input type="text" id="filterSuma" name="minSuma" th:value="${filtruCurent}" placeholder="Arată sume > X RON" style="width: 200px;">
+        <button type="submit" class="btn btn-filter">Aplică</button>
+        <span id="err-filter" class="error-msg">Trebuie să fie un număr!</span>
+    </form>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Data</th>
+            <th>Descriere</th>
+            <th>Categ.</th>
+            <th>Cont</th>
+            <th>Suma</th>
+            <th>Acțiuni</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="t : ${tranzactiiList}">
+            <td th:text="${#temporals.format(t.data, 'dd-MM HH:mm')}">Data</td>
+            <td th:text="${t.descriere}" style="font-weight: 500;">Descriere</td>
+            <td th:text="${t.categorie.nume}">Cat</td>
+            <td th:text="${t.cont.nume}">Cont</td>
+            <td th:text="${t.suma} + ' RON'" th:style="${t.suma < 0} ? 'color: #e74c3c; font-weight: bold;' : 'color: #27ae60; font-weight: bold;'">Suma</td>
+
+            <td style="display: flex; gap: 5px;">
+                <form th:action="@{/tranzactii}" method="post" onsubmit="return validateUpdate(this)" style="display:flex;">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="id_tranzactie" th:value="${t.id}">
+                    <input type="text" name="descriere_noua" placeholder="Desc. noua" required style="width: 100px; padding: 5px; margin-right: 5px;">
+                    <button type="submit" class="btn btn-update">Save</button>
+                </form>
+
+                <form th:action="@{/tranzactii}" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id_tranzactie" th:value="${t.id}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Ești sigur?')">X</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Pastram aceleasi scripturi de validare, sunt bune
+    function validateAddForm() {
+        var isValid = true;
+        var desc = document.getElementById('descriere').value;
+        var errDesc = document.getElementById('err-descriere');
+        if (!/[a-zA-Z]/.test(desc)) { errDesc.style.display = 'block'; isValid = false; } else { errDesc.style.display = 'none'; }
+
+        var sumaInput = document.getElementById('suma').value;
+        var errSuma = document.getElementById('err-suma');
+        if (isNaN(sumaInput) || sumaInput.trim() === "") { errSuma.style.display = 'block'; isValid = false; } else { errSuma.style.display = 'none'; }
+        return isValid;
+    }
+    function validateFilter() {
+        var val = document.getElementById('filterSuma').value;
+        var errFilter = document.getElementById('err-filter');
+        if (val.trim() !== "" && isNaN(val)) { errFilter.style.display = 'block'; return false; }
+        errFilter.style.display = 'none'; return true;
+    }
+    function validateUpdate(form) {
+        var input = form.querySelector('input[name="descriere_noua"]');
+        if (!/[a-zA-Z]/.test(input.value)) { alert("Descriere invalidă!"); return false; }
+        return true;
+    }
+</script>
+
+</body>
+</html>

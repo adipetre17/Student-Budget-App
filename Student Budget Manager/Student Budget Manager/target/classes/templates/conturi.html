@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Conturi - StudentBudget</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .nav {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .nav a { float: left; color: white; padding: 15px 20px; text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .nav a:hover, .active { background-color: rgba(255,255,255,0.25); }
+        .logout { float: right !important; background-color: #ff6b6b; }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 { color: #2c3e50; text-align: center; }
+
+        /* BOX Adaugare */
+        .box {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-right: 10px;}
+
+        /* Table Style */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 0 15px rgba(0,0,0,0.05);}
+        th { background: linear-gradient(to right, #8e44ad, #c0392b); color: white; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f9f9f9; }
+
+        .btn { padding: 8px 15px; color: white; border: none; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.2s;}
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-add { background: linear-gradient(to right, #11998e, #38ef7d); padding: 10px 20px;}
+        .btn-del { background-color: #c0392b; }
+        .btn-upd { background-color: #f39c12; }
+
+        .error-msg { color: #e74c3c; font-size: 13px; display: none; margin-top: 8px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a th:href="@{/home}">Acasă</a>
+    <a th:href="@{/tranzactii}">Tranzacții</a>
+    <a th:href="@{/conturi}" class="active">Conturi</a>
+    <a th:href="@{/rapoarte}">Rapoarte</a>
+    <a th:href="@{/logout}" class="logout">Delogare</a>
+</div>
+
+<div class="container">
+    <h1>Gestionare Conturi</h1>
+
+    <div class="box">
+        <h3 style="margin-top:0; color:#444;">Adaugă Cont Nou</h3>
+        <form th:action="@{/conturi}" method="post" onsubmit="return validateAddCont()">
+            <input type="hidden" name="action" value="add">
+
+            <div style="display: flex; justify-content: center; align-items: center;">
+                <input type="text" id="numeCont" name="nume_cont" placeholder="Nume (ex: Revolut)" required style="width: 40%;">
+                <input type="text" id="balanta" name="balanta" placeholder="Suma (ex: 500)" required style="width: 25%;">
+                <button type="submit" class="btn btn-add">Creează Cont</button>
+            </div>
+
+            <div id="err-nume" class="error-msg">Numele trebuie să conțină litere!</div>
+            <div id="err-balanta" class="error-msg">Suma trebuie să fie un număr valid!</div>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Nume Cont</th>
+            <th>Balanța Curentă</th>
+            <th>Redenumire</th>
+            <th>Acțiune</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${listaConturi}">
+            <td th:text="${c.nume}" style="font-weight: bold; color: #333;">Nume</td>
+            <td th:text="${c.balanta} + ' RON'" style="color: #2980b9; font-weight: bold;">Suma</td>
+
+            <td>
+                <form th:action="@{/conturi}" method="post" style="display:flex; align-items: center;" onsubmit="return validateUpdateCont(this)">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="id_cont" th:value="${c.id}">
+                    <input type="text" name="nume_nou" placeholder="Nume nou" required style="width: 120px; padding: 5px;">
+                    <button type="submit" class="btn btn-upd" style="margin-left: 5px; padding: 6px 10px;">Save</button>
+                </form>
+            </td>
+
+            <td>
+                <form th:action="@{/conturi}" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id_cont" th:value="${c.id}">
+                    <button type="submit" class="btn btn-del" onclick="return confirm('ATENȚIE! \nVei șterge și tranzacțiile acestui cont.\nSigur?');">Șterge</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function validateAddCont() {
+        var isValid = true;
+        var nume = document.getElementById('numeCont').value;
+        var errNume = document.getElementById('err-nume');
+        if (!/[a-zA-Z]/.test(nume)) { errNume.style.display = 'block'; isValid = false; } else { errNume.style.display = 'none'; }
+
+        var balantaVal = document.getElementById('balanta').value;
+        var errBalanta = document.getElementById('err-balanta');
+        if (balantaVal.trim() === "" || isNaN(balantaVal)) { errBalanta.style.display = 'block'; isValid = false; } else { errBalanta.style.display = 'none'; }
+        return isValid;
+    }
+
+    function validateUpdateCont(form) {
+        var input = form.querySelector('input[name="nume_nou"]');
+        if (!/[a-zA-Z]/.test(input.value)) { alert("Nume invalid!"); return false; }
+        return true;
+    }
+</script>
+
+</body>
+</html>
