@@ -11,7 +11,7 @@ A comprehensive full-stack web application designed to help students track their
 
 ## 🛠️ Tech Stack
 * **Backend:** Java, Spring Boot (Web, Data JPA)
-* **Database:** MySQL / PostgreSQL (Relational Schema)
+* **Database:** MS SQL Server
 * **Frontend:** HTML5, CSS3, JavaScript
 * **Tools:** Maven, IntelliJ IDEA, Git
 
